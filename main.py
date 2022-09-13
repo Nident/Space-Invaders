@@ -90,6 +90,13 @@ def bullet_update():
     # print(f'{bullet_y},{bullet_x}')
 
 
+def model_update():
+    player_update()
+    bullet_update()
+    enemy_update()
+
+
+# functions
 def collision(x, y, width, height):
     """enemy had collision with object (rect)"""
     rect_enemy = pygame.Rect(enemy_x, enemy_y, enemy_width, enemy_height)
@@ -102,6 +109,14 @@ def game_over():
     game_over_status = True
 
 
+def reload(event):
+    global bullets, bullet_magazine_capacity
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_e and bullet_magazine_capacity == 0:
+            bullets = []
+            bullet_magazine_capacity = 5
+
+
 def enemy_update():
     global enemy_alive, enemy_x, enemy_y, enemy_dx, enemy_dy
     if not enemy_alive:
@@ -110,16 +125,26 @@ def enemy_update():
     enemy_y += enemy_dy
     # print(f'{enemy_alive}, {enemy_x},  {enemy_y}, {enemy_dx}, {enemy_dy}')
     # Collision wth player
+    if enemy_y > display_height - player_height:
+        enemy_alive = False
 
     if collision(player_x, player_y, player_width, player_height):
         enemy_alive = False
         game_over()
 
+    for i in range(len(bullets)):
+        if collision(bullets[i]['bullet_x'], bullets[i]['bullet_y'], bullet_width, bullet_height):
+            enemy_alive = False
+            bullets[i]['bullet_alive'] = False
 
-def model_update():
-    player_update()
-    bullet_update()
-    enemy_update()
+
+# create model
+def bullet_magazine_create():
+    bullet_magazine_capacity_x = 0
+    bullet_magazine_capacity_y = display_height - 40
+    for i in range(bullet_magazine_capacity):
+        display.blit(bullet_img, (bullet_magazine_capacity_x, bullet_magazine_capacity_y))
+        bullet_magazine_capacity_x += 32
 
 
 def bullet_create():
@@ -138,33 +163,19 @@ def bullet_create():
 def enemy_create():
     """Create an enemy in random place. it flies down"""
     global enemy_alive
-    # x = random.randint(0, display_width)
-    x = player_x
+    x = random.randint(0, display_width)
+    # x = player_x
     y = 30
 
     # dx = random.randint(-2, 3)
     dx = 0
     # dy = random.randint(1, 3) / 2
-    dy = 0.3
+    dy = 0.1
     enemy_alive = True
     return x, y, dx, dy
 
 
 # redrawing
-def reload(event):
-    global bullets, bullet_magazine_capacity
-    if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_e:
-            bullets = []
-            bullet_magazine_capacity = 5
-
-
-def bullet_magazine_create():
-    bullet_magazine_capacity_x = 0
-    bullet_magazine_capacity_y = display_height - 40
-    for i in range(bullet_magazine_capacity):
-        display.blit(bullet_img, (bullet_magazine_capacity_x, bullet_magazine_capacity_y))
-        bullet_magazine_capacity_x += 32
 
 
 def display_redraw():
@@ -172,11 +183,12 @@ def display_redraw():
     display.fill((0, 0, 0), (0, 0, display_width, display_height))
     display.blit(player_img, (player_x, player_y))
     bullet_magazine_create()
-    # bullet_magazine_create()
+
     if len(bullets) != 0:
         for i in range(len(bullets)):
             if bullets[i]['bullet_alive']:
                 display.blit(bullet_img, (bullets[i]['bullet_x'], bullets[i]['bullet_y']))
+
     if enemy_alive:
         display.blit(enemy_img, (enemy_x, enemy_y))
     if game_over_status:
